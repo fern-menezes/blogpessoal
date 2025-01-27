@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn } from 'typeorm';
 import { IsNotEmpty } from 'class-validator';
 
-@Entity({ name: 'tb_usuarios' })
+@Entity({ name: 'tb_postagens' })
 export class Postagem {
   @PrimaryGeneratedColumn()
   id: number
@@ -15,7 +15,7 @@ export class Postagem {
   texto: string
 
   @UpdateDateColumn()
-  date: Date
+  data: Date
 
   
 }
