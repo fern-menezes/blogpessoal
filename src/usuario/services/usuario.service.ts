@@ -12,7 +12,6 @@ export class UsuarioService {
         private bcrypt: Bcrypt
     ) { }
 
-    // Método para buscar um usuário pelo nome de usuário
     async findByUsuario(usuario: string): Promise<Usuario> {
         // Busca o usuário no repositório
         const foundUsuario = await this.usuarioRepository.findOne({
@@ -28,22 +27,26 @@ export class UsuarioService {
         return foundUsuario;
     }
 
-
     async findAll(): Promise<Usuario[]> {
-        return await this.usuarioRepository.find();
-
+        return await this.usuarioRepository.find(
+            {
+                relations:{
+                    postagem: true
+                }
+            }
+        );
     }
 
     async findById(id: number): Promise<Usuario> {
 
-        const usuario = await this.usuarioRepository.findOne({
+        let usuario = await this.usuarioRepository.findOne({
             where: {
                 id
             }
         });
 
         if (!usuario)
-            throw new HttpException('Usuario não encontrado!', HttpStatus.NOT_FOUND);
+            throw new HttpException('usuario não encontrado!', HttpStatus.NOT_FOUND);
 
         return usuario;
 
@@ -51,23 +54,26 @@ export class UsuarioService {
 
     async create(usuario: Usuario): Promise<Usuario> {
         
-        const buscaUsuario = await this.findByUsuario(usuario.usuario);
+        let usuarioBusca = await this.findByUsuario(usuario.usuario);
 
-        if (buscaUsuario)
-            throw new HttpException("O Usuario já existe!", HttpStatus.BAD_REQUEST);
+        if (!usuarioBusca) {
+            usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
+            return await this.usuarioRepository.save(usuario);
+        }
 
-        usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
-        return await this.usuarioRepository.save(usuario);
+        throw new HttpException("O Usuario ja existe!", HttpStatus.BAD_REQUEST);
 
     }
 
     async update(usuario: Usuario): Promise<Usuario> {
 
-        await this.findById(usuario.id);
+        let usuarioUpdate: Usuario = await this.findById(usuario.id);
+        let usuarioBusca = await this.findByUsuario(usuario.usuario);
 
-        const buscaUsuario = await this.findByUsuario(usuario.usuario);
+        if (!usuarioUpdate)
+            throw new HttpException('Usuário não encontrado!', HttpStatus.NOT_FOUND);
 
-        if (buscaUsuario && buscaUsuario.id !== usuario.id)
+        if (usuarioBusca && usuarioBusca.id !== usuario.id)
             throw new HttpException('Usuário (e-mail) já Cadastrado!', HttpStatus.BAD_REQUEST);
 
         usuario.senha = await this.bcrypt.criptografarSenha(usuario.senha)
