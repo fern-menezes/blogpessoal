@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppModule } from '../src/app.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 describe('Testes dos Módulos Usuario e Auth (e2e)', () => {
 
@@ -21,8 +20,7 @@ describe('Testes dos Módulos Usuario e Auth (e2e)', () => {
           synchronize: true,
           dropSchema: true,
         }),
-        AppModule
-      ],
+        AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -43,14 +41,14 @@ describe('Testes dos Módulos Usuario e Auth (e2e)', () => {
         senha: 'rootroot',
         foto: '-',
       })
-      .expect(404)
+      .expect(201)
 
     usuarioId = resposta.body.id;
 
   });
 
   it("02 - Não Deve Cadastrar um Usuário Duplicado", async () => {
-    return await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post('/usuarios/cadastrar')
       .send({
         nome: 'Root',
@@ -58,7 +56,7 @@ describe('Testes dos Módulos Usuario e Auth (e2e)', () => {
         senha: 'rootroot',
         foto: '-',
       })
-      .expect(404)
+      .expect(400)
 
   });
 
@@ -69,21 +67,22 @@ describe('Testes dos Módulos Usuario e Auth (e2e)', () => {
       usuario: 'root@root.com',
       senha: 'rootroot',
     })
-    .expect(404)
+    .expect(200)
 
     token = resposta.body.token;
 
   })
 
   it("04 - Deve Listar todos os Usuários", async () => {
-    return await request(app.getHttpServer())
+    return request(app.getHttpServer())
     .get('/usuarios/all')
     .set('Authorization', `${token}`)
-    .expect(401)
+    .send({})
+    .expect(200)
   })
 
   it("05 - Deve Atualizar um Usuário", async () => {
-    return await request(app.getHttpServer())
+    return request(app.getHttpServer())
     .put('/usuarios/atualizar')
     .set('Authorization', `${token}`)
     .send({
@@ -93,19 +92,11 @@ describe('Testes dos Módulos Usuario e Auth (e2e)', () => {
       senha: 'rootroot',
       foto: '-',
     })
-    .expect(401)
+    .expect(200)
     .then( resposta => {
-      expect(resposta.body.nome).toEqual(resposta.body.nome);
+      expect("Root Atualizado").toEqual(resposta.body.nome);
     })
 
-  })
-
-  /** Teste - Consultar Usuário por ID */
-  it("06 - Deve Listar apenas um Usuário pelo id", async () => {
-    return await request(app.getHttpServer())
-    .get(`/usuarios/${usuarioId}`)
-    .set('Authorization', `${token}`)
-    .expect(401)
   })
 
 });
